@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+
+  <!-- Header Section -->
+  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
+        Brand Registration Portal
+      </h1>
+      <p class="text-xs sm:text-sm text-slate-500 dark:text-gray-400 mt-1">
+        Add new genuine shoes, lock their details onto the blockchain, and create printable QR codes.
+      </p>
+    </div>
+
+    <!-- Dynamic Status Indicator -->
+    {% if blockchain_connected %}
+      <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-semibold shadow-sm">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span>Blockchain: Connected (Ganache)</span>
+      </div>
+    {% else %}
+      <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 text-xs font-semibold shadow-sm">
+        <span class="w-2 h-2 rounded-full bg-red-500"></span>
+        <span>Blockchain: Offline / Not Connected</span>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Flash Alerts -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, msg in messages %}
+        <div class="mb-6 p-4 rounded-xl text-xs font-semibold {% if category in ['error', 'danger'] %}bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20{% else %}bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20{% endif %}">
+          {{ msg }}
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <!-- Main Content Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Left Column: Registration Form (2 cols wide) -->
+    <div class="lg:col-span-2 bg-slate-50 dark:bg-[#111827]/90 border border-slate-200 dark:border-gray-800 rounded-3xl p-6 sm:p-8 shadow-sm">
+      <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-6">
+        Register New Footwear Batch
+      </h2>
+
+      <form action="/manufacturer" method="POST" enctype="multipart/form-data" class="space-y-5">
+        
+        <!-- Row 1: Product ID & Brand -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300 mb-2">
+              Product ID / Code *
+            </label>
+            <input 
+              type="text" 
+              name="productId" 
+              required 
+              placeholder="e.g. NIK-AF1-2026" 
+              class="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-[#0b0f19] border border-slate-300 dark:border-gray-800 text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:border-indigo-500 transition"
+            >
+            <span class="text-[11px] text-slate-400 dark:text-gray-500 mt-1 block">
+              Unique ID assigned to this shoe batch
+            </span>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300 mb-2">
+              Brand Name *
+            </label>
+            <select 
+              name="brand" 
+              required 
+              class="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-[#0b0f19] border border-slate-300 dark:border-gray-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-indigo-500 transition"
+            >
+              <option value="" disabled selected>-- Select Brand --</option>
+              <option value="Nike">Nike</option>
+              <option value="Adidas">Adidas</option>
+              <option value="Puma">Puma</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Row 2: Product Name / Model -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300 mb-2">
+            Product Name / Model *
+          </label>
+          <input 
+            type="text" 
+            name="product_name" 
+            required 
+            placeholder="e.g. Air Force 1 '07 / Samba OG / Suede Classic" 
+            class="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-[#0b0f19] border border-slate-300 dark:border-gray-800 text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:border-indigo-500 transition"
+          >
+          <span class="text-[11px] text-slate-400 dark:text-gray-500 mt-1 block">
+            Official sneaker name as displayed to customers
+          </span>
+        </div>
+
+        <!-- Row 3: Batch No & Date -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300 mb-2">
+              Production Batch *
+            </label>
+            <input 
+              type="text" 
+              name="batchNo" 
+              required 
+              placeholder="e.g. BATCH-2026-01" 
+              class="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-[#0b0f19] border border-slate-300 dark:border-gray-800 text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:border-indigo-500 transition"
+            >
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300 mb-2">
+              Manufacture Date *
+            </label>
+            <input 
+              type="date" 
+              name="mfgDate" 
+              required 
+              class="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-[#0b0f19] border border-slate-300 dark:border-gray-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-indigo-500 transition"
+            >
+          </div>
+        </div>
+
+        <!-- Row 4: Description -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300 mb-2">
+            Shoe Description & Details *
+          </label>
+          <textarea 
+            name="description" 
+            rows="3" 
+            required 
+            placeholder="Air Force 1 '07 White. Premium leather finish, stitched rubber cupsole, perforated toe box..." 
+            class="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-[#0b0f19] border border-slate-300 dark:border-gray-800 text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:border-indigo-500 transition"
+          ></textarea>
+        </div>
+
+        <!-- Row 5: Multi-Angle Factory Master Photos -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300 mb-2">
+            Factory Master Photos (Multi-Angle) *
+          </label>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            
+            <!-- Angle 1: Side / Profile View -->
+            <div class="border-2 border-dashed border-slate-300 dark:border-gray-700 hover:border-indigo-500 rounded-2xl p-4 text-center bg-white/50 dark:bg-[#0b0f19]/40 transition">
+              <input type="file" id="productImage" name="productImage" accept="image/*" required class="hidden" onchange="updatePhotoTag(this, 'label1')">
+              <label for="productImage" class="cursor-pointer flex flex-col items-center">
+                <svg class="w-6 h-6 text-indigo-500 mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span id="label1" class="text-xs font-semibold text-slate-800 dark:text-gray-200">Angle 1: Side Profile *</span>
+                <span class="text-[10px] text-slate-400 mt-0.5">Primary shoe silhouette</span>
+              </label>
+            </div>
+
+            <!-- Angle 2: Heel / Logo Details -->
+            <div class="border-2 border-dashed border-slate-300 dark:border-gray-700 hover:border-indigo-500 rounded-2xl p-4 text-center bg-white/50 dark:bg-[#0b0f19]/40 transition">
+              <input type="file" id="productImage2" name="productImage2" accept="image/*" class="hidden" onchange="updatePhotoTag(this, 'label2')">
+              <label for="productImage2" class="cursor-pointer flex flex-col items-center">
+                <svg class="w-6 h-6 text-indigo-500 mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3" stroke-width="2"/></svg>
+                <span id="label2" class="text-xs font-semibold text-slate-800 dark:text-gray-200">Angle 2: Heel / Logo</span>
+                <span class="text-[10px] text-slate-400 mt-0.5">Stitching & brand badge</span>
+              </label>
+            </div>
+
+            <!-- Angle 3: Outsole / Insole -->
+            <div class="border-2 border-dashed border-slate-300 dark:border-gray-700 hover:border-indigo-500 rounded-2xl p-4 text-center bg-white/50 dark:bg-[#0b0f19]/40 transition">
+              <input type="file" id="productImage3" name="productImage3" accept="image/*" class="hidden" onchange="updatePhotoTag(this, 'label3')">
+              <label for="productImage3" class="cursor-pointer flex flex-col items-center">
+                <svg class="w-6 h-6 text-indigo-500 mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                <span id="label3" class="text-xs font-semibold text-slate-800 dark:text-gray-200">Angle 3: Outsole / Bottom</span>
+                <span class="text-[10px] text-slate-400 mt-0.5">Tread pattern & size tag</span>
+              </label>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button 
+          type="submit" 
+          class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-indigo-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 text-white font-bold text-sm transition shadow-md shadow-indigo-500/20"
+        >
+          Save to Blockchain &amp; Create QR Code
+        </button>
+
+      </form>
+    </div>
+
+    <!-- Right Column: System Workings (1 col wide) -->
+    <div class="space-y-5">
+      
+      <div class="bg-slate-50 dark:bg-[#111827]/90 border border-slate-200 dark:border-gray-800 rounded-3xl p-6 shadow-sm">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-4">
+          Automated Verification Pipeline
+        </h3>
+        
+        <div class="space-y-4 text-xs text-slate-600 dark:text-gray-400">
+          <div class="flex items-start gap-3">
+            <span class="w-5 h-5 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 font-bold flex items-center justify-center shrink-0">1</span>
+            <div>
+              <strong class="text-slate-800 dark:text-gray-200 block">Digital Seal Created:</strong>
+              Combines the brand, model name, ID, and batch into a secure SHA-256 fingerprint.
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3">
+            <span class="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-bold flex items-center justify-center shrink-0">2</span>
+            <div>
+              <strong class="text-slate-800 dark:text-gray-200 block">Saved to Blockchain:</strong>
+              Permanently writes transaction blocks to Ganache to ensure immutable audit trails.
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3">
+            <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold flex items-center justify-center shrink-0">3</span>
+            <div>
+              <strong class="text-slate-800 dark:text-gray-200 block">QR Code Generated:</strong>
+              Creates a scannable QR code directly pointing to the footwear verification route.
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3">
+            <span class="w-5 h-5 rounded-full bg-purple-500/20 text-purple-600 dark:text-purple-400 font-bold flex items-center justify-center shrink-0">4</span>
+            <div>
+              <strong class="text-slate-800 dark:text-gray-200 block">AI Baseline Stored:</strong>
+              Extracts high-dimensional MobileNetV2 embeddings across all angles for similarity checks.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800/40 rounded-3xl p-5 text-xs text-indigo-900 dark:text-indigo-200">
+        <strong class="font-bold block mb-1">Testing Tip:</strong>
+        After registering, the QR code appears below. Scan it using your mobile phone camera or the Verify portal to validate the product.
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Bottom Section: Table of Registered Shoes -->
+  <div class="mt-8 bg-slate-50 dark:bg-[#111827]/90 border border-slate-200 dark:border-gray-800 rounded-3xl p-6 sm:p-8 shadow-sm">
+    <h2 class="text-base font-bold text-slate-900 dark:text-white mb-4">
+      Registered Footwear Products ({{ products|length if products else 0 }})
+    </h2>
+
+    {% if products and products|length > 0 %}
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs text-slate-600 dark:text-gray-400">
+          <thead class="border-b border-slate-200 dark:border-gray-800 text-slate-900 dark:text-gray-200 uppercase font-semibold">
+            <tr>
+              <th class="py-3 px-3">Product ID</th>
+              <th class="py-3 px-3">Shoe Name</th>
+              <th class="py-3 px-3">Brand</th>
+              <th class="py-3 px-3">Batch</th>
+              <th class="py-3 px-3">Date</th>
+              <th class="py-3 px-3">QR Code</th>
+              <th class="py-3 px-3 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-gray-800">
+            {% for prod in products %}
+              <tr>
+                <td class="py-3 px-3 font-mono font-semibold text-slate-900 dark:text-white">{{ prod.productId or prod.product_id }}</td>
+                <td class="py-3 px-3 font-medium text-slate-900 dark:text-white">{{ prod.product_name or prod.name or 'Footwear Model' }}</td>
+                <td class="py-3 px-3">{{ prod.brand }}</td>
+                <td class="py-3 px-3">{{ prod.batchNo or prod.batch_no }}</td>
+                <td class="py-3 px-3">{{ prod.mfgDate or prod.manufacturing_date }}</td>
+                <td class="py-3 px-3">
+                  {% if prod.qr_code_path or prod.qrCodePath %}
+                    <a href="{{ prod.qr_code_path or prod.qrCodePath }}" target="_blank" class="text-indigo-600 dark:text-indigo-400 font-semibold underline">
+                      View QR
+                    </a>
+                  {% else %}
+                    <span class="text-slate-400">N/A</span>
+                  {% endif %}
+                </td>
+                <td class="py-3 px-3 text-right">
+                  <form action="/manufacturer/delete/{{ prod.productId or prod.product_id }}" method="POST" onsubmit="return confirm('Remove product {{ prod.productId or prod.product_id }} from the active registry?');" class="inline">
+                    <button type="submit" class="px-2.5 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/20 font-semibold transition">
+                      Delete
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-center py-8 text-xs text-slate-500 dark:text-gray-500">
+        No footwear products registered yet. Use the form above to register your first shoe.
+      </p>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+  function updatePhotoTag(input, labelId) {
+    if (input.files && input.files[0]) {
+      document.getElementById(labelId).textContent = "Selected: " + input.files[0].name.substring(0, 16) + "...";
+    }
+  }
+</script>
+{% endblock %}

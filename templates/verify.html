@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-10">
+
+  <!-- Header Section -->
+  <div class="text-center mb-8">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-3">
+      <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+      3-Layer Verification Engine
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+      Authenticate Your Footwear
+    </h1>
+    <p class="text-sm text-slate-500 dark:text-gray-400 mt-2 max-w-xl mx-auto">
+      Scan the cryptographic QR code or upload its photo from your device, then provide a live shoe photo to run through the anti-counterfeit AI engine.
+    </p>
+  </div>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, msg in messages %}
+        <div class="mb-6 p-4 rounded-xl text-xs font-semibold {% if category in ['error', 'danger'] %}bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20{% else %}bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20{% endif %}">
+          {{ msg }}
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <!-- Verification Form Card -->
+  <div class="bg-slate-50 dark:bg-[#111827]/90 border border-slate-200 dark:border-gray-800 rounded-3xl p-6 sm:p-10 shadow-lg">
+    <form action="/verify" method="POST" enctype="multipart/form-data" class="space-y-8">
+
+      <!-- Step 1: Product Identification -->
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-7 h-7 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-xs shadow-md shadow-indigo-500/20">
+            1
+          </span>
+          <h2 class="text-base font-bold text-slate-900 dark:text-white tracking-wide">
+            Product Identification
+          </h2>
+        </div>
+
+        <label for="productId" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300 mb-2">
+          Product ID / Serial Number *
+        </label>
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+          <!-- Text Input -->
+          <div class="md:col-span-6">
+            <input 
+              type="text" 
+              id="productId" 
+              name="productId" 
+              value="{{ scanned_id or '' }}" 
+              required 
+              placeholder="e.g. NIK-AF1-07W" 
+              class="w-full px-4 py-3 rounded-xl bg-white dark:bg-[#0b0f19] border border-slate-300 dark:border-gray-800 text-slate-900 dark:text-white font-mono text-sm placeholder-slate-400 focus:outline-none focus:border-indigo-500 transition"
+            >
+          </div>
+
+          <!-- Buttons: Live Camera Scan & Device Image Upload -->
+          <div class="md:col-span-6 flex flex-col sm:flex-row gap-2">
+            <!-- Camera Scanner Trigger -->
+            <button 
+              type="button" 
+              onclick="startCameraScanner()" 
+              class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition shadow-sm"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4a2 2 0 002-2V6a2 2 0 00-2-2H4a2 2 0 00-2 2v12a2 2 0 002 2h4"/></svg>
+              <span>Camera</span>
+            </button>
+
+            <!-- Upload QR File from Device -->
+            <label 
+              class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-semibold text-xs cursor-pointer transition shadow-sm text-center"
+            >
+              <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <span id="qrFileLabel">Upload QR</span>
+              <input 
+                type="file" 
+                id="qrFileInput" 
+                accept="image/*" 
+                class="hidden" 
+                onchange="scanQRFromFile(this)"
+              >
+            </label>
+          </div>
+        </div>
+
+        <p class="text-[11px] text-slate-500 dark:text-gray-400 mt-2">
+          Enter code manually, scan using your device's webcam/camera, or pick a QR screenshot file.
+        </p>
+
+        <!-- Hidden Reader Node for File Scanning -->
+        <div id="qr-file-reader" style="display: none;"></div>
+
+        <!-- Camera Scanner Live Modal Container -->
+        <div id="cameraScannerModal" class="hidden mt-4 p-4 border border-indigo-500/30 rounded-2xl bg-indigo-950/20">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-semibold text-indigo-300">Point Camera at Genuine Footwear QR Code</span>
+            <button type="button" onclick="stopCameraScanner()" class="text-xs text-rose-400 hover:text-rose-300 font-bold">
+              ✕ Cancel
+            </button>
+          </div>
+          <div id="camera-preview" class="w-full max-w-sm mx-auto overflow-hidden rounded-xl border border-slate-700 bg-black"></div>
+        </div>
+      </div>
+
+      <hr class="border-slate-200 dark:border-gray-800">
+
+      <!-- Step 2: Physical Inspection Photo Upload -->
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-7 h-7 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-xs shadow-md shadow-indigo-500/20">
+            2
+          </span>
+          <h2 class="text-base font-bold text-slate-900 dark:text-white tracking-wide">
+            Physical Inspection Photo
+          </h2>
+        </div>
+
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300 mb-2">
+          Customer Shoe Photo (Side View / Heel / Sole)
+        </label>
+
+        <div class="border-2 border-dashed border-slate-300 dark:border-gray-700 hover:border-indigo-500 rounded-2xl p-6 text-center bg-white/50 dark:bg-[#0b0f19]/40 transition">
+          <input 
+            type="file" 
+            id="customerShoeImage" 
+            name="customerShoeImage" 
+            accept="image/*" 
+            class="hidden" 
+            onchange="displayFileName(this)"
+          >
+          <label for="customerShoeImage" class="cursor-pointer flex flex-col items-center">
+            <svg class="w-8 h-8 text-indigo-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3" stroke-width="2"/></svg>
+            <span id="shoeFileText" class="text-xs font-semibold text-slate-800 dark:text-gray-200">Take a photo or choose an image file</span>
+            <span class="text-[11px] text-slate-400 dark:text-gray-500 mt-1">MobileNetV2 will cross-reference this against registered factory masters</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <button 
+        type="submit" 
+        class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-indigo-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 text-white font-bold text-sm transition shadow-lg shadow-indigo-500/20"
+      >
+        Run Anti-Counterfeit Verification
+      </button>
+
+    </form>
+  </div>
+
+</div>
+
+<!-- QR Scanning Engine Scripts -->
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+  let html5CameraScanner = null;
+
+  function populateProductId(detectedValue) {
+    let id = detectedValue.trim();
+    if (id.includes("id=")) {
+      id = id.split("id=")[1].split("&")[0];
+    }
+    const input = document.getElementById("productId");
+    if (input) {
+      input.value = id.toUpperCase();
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  }
+
+  // 1. Scan QR from Uploaded Image File
+  function scanQRFromFile(input) {
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+    document.getElementById("qrFileLabel").textContent = file.name.substring(0, 10) + "...";
+
+    const fileScanner = new Html5Qrcode("qr-file-reader");
+    fileScanner.scanFile(file, true)
+      .then(decodedText => {
+        populateProductId(decodedText);
+        alert("QR Code Detected: " + decodedText);
+      })
+      .catch(err => {
+        alert("Could not detect a valid QR code in this image. Please ensure the QR is clear and well-lit.");
+        console.error("File scanner error:", err);
+      });
+  }
+
+  // 2. Scan QR from Live Camera Stream
+  function startCameraScanner() {
+    const modal = document.getElementById("cameraScannerModal");
+    modal.classList.remove("hidden");
+
+    if (!html5CameraScanner) {
+      html5CameraScanner = new Html5Qrcode("camera-preview");
+    }
+
+    html5CameraScanner.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 220, height: 220 } },
+      (decodedText) => {
+        populateProductId(decodedText);
+        stopCameraScanner();
+      },
+      (errorMessage) => {
+        // Continuous search frame error, ignore
+      }
+    ).catch(err => {
+      alert("Unable to access camera. Please allow camera permissions in your browser.");
+      console.error("Camera error:", err);
+      stopCameraScanner();
+    });
+  }
+
+  function stopCameraScanner() {
+    if (html5CameraScanner) {
+      html5CameraScanner.stop().then(() => {
+        document.getElementById("cameraScannerModal").classList.add("hidden");
+      }).catch(err => {
+        document.getElementById("cameraScannerModal").classList.add("hidden");
+      });
+    } else {
+      document.getElementById("cameraScannerModal").classList.add("hidden");
+    }
+  }
+
+  // Customer Shoe File Upload Name Display
+  function displayFileName(input) {
+    if (input.files && input.files[0]) {
+      document.getElementById("shoeFileText").textContent = "Selected: " + input.files[0].name;
+    }
+  }
+</script>
+{% endblock %}

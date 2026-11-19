@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-10">
+
+  <!-- Back Link -->
+  <div class="mb-6">
+    <a href="/verify" class="inline-flex items-center gap-2 text-xs font-semibold text-indigo-500 hover:text-indigo-400 transition">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+      Check Another Shoe
+    </a>
+  </div>
+
+  <!-- Main Status Banner -->
+  <div class="rounded-3xl p-6 sm:p-8 border shadow-xl {% if authentic %}bg-emerald-500/10 border-emerald-500/30 text-emerald-950 dark:text-emerald-100{% else %}bg-rose-500/10 border-rose-500/30 text-rose-950 dark:text-rose-100{% endif %} mb-8 text-center sm:text-left flex flex-col sm:flex-row items-center gap-6">
+    
+    <!-- Status Icon -->
+    <div class="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 {% if authentic %}bg-emerald-500 text-white shadow-lg shadow-emerald-500/30{% else %}bg-rose-500 text-white shadow-lg shadow-rose-500/30{% endif %}">
+      {% if authentic %}
+        <svg class="w-9 h-9" fill="none" stroke="currentColor" viewBox="2.5 2.5 19 19"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+      {% else %}
+        <svg class="w-9 h-9" fill="none" stroke="currentColor" viewBox="2.5 2.5 19 19"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+      {% endif %}
+    </div>
+
+    <!-- Status Text -->
+    <div class="flex-1">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2 {% if authentic %}bg-emerald-500/20 text-emerald-700 dark:text-emerald-300{% else %}bg-rose-500/20 text-rose-700 dark:text-rose-300{% endif %}">
+        {% if authentic %}
+          <span>VERIFIED ORIGINAL</span>
+        {% else %}
+          <span>SUSPECTED FAKE / UNVERIFIED</span>
+        {% endif %}
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
+        {% if authentic %}
+          100% Genuine Shoe
+        {% else %}
+          Authentication Failed
+        {% endif %}
+      </h1>
+      <p class="text-xs sm:text-sm text-slate-600 dark:text-gray-300 mt-1">
+        {% if authentic %}
+          This pair matches the official brand factory records and passed the visual photo comparison.
+        {% else %}
+          {{ reason or 'This shoe could not be verified against the official manufacturer records.' }}
+        {% endif %}
+      </p>
+    </div>
+  </div>
+
+  {% if product %}
+  <!-- Results Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Left Column: 3 Simple Checks -->
+    <div class="space-y-4">
+      <div class="bg-slate-50 dark:bg-[#111827]/90 border border-slate-200 dark:border-gray-800 rounded-3xl p-6 shadow-sm">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-4">
+          3-Step Security Check
+        </h2>
+
+        <div class="space-y-4 text-xs">
+          <!-- Check 1: Details Integrity -->
+          <div class="flex items-start justify-between gap-3 pb-3 border-b border-slate-200 dark:border-gray-800">
+            <div>
+              <span class="font-bold text-slate-800 dark:text-gray-200 block">1. Factory Digital Seal</span>
+              <span class="text-[11px] text-slate-500 dark:text-gray-400">Shoe details are unchanged</span>
+            </div>
+            <div>
+              {% if hash_matched %}
+                <span class="px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-500 font-bold text-[11px] border border-emerald-500/20">Genuine</span>
+              {% else %}
+                <span class="px-2.5 py-1 rounded-md bg-rose-500/10 text-rose-500 font-bold text-[11px] border border-rose-500/20">Tampered</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Check 2: Blockchain Proof -->
+          <div class="flex items-start justify-between gap-3 pb-3 border-b border-slate-200 dark:border-gray-800">
+            <div>
+              <span class="font-bold text-slate-800 dark:text-gray-200 block">2. Blockchain Record</span>
+              <span class="text-[11px] text-slate-500 dark:text-gray-400">Official brand registration lock</span>
+            </div>
+            <div>
+              {% if blockchain_live and product.txHash %}
+                <span class="px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-500 font-bold text-[11px] border border-emerald-500/20">Permanent</span>
+              {% else %}
+                <span class="px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-500 font-bold text-[11px] border border-amber-500/20">Verified</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Check 3: Photo Match -->
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <span class="font-bold text-slate-800 dark:text-gray-200 block">3. AI Visual Match</span>
+              <span class="text-[11px] text-slate-500 dark:text-gray-400">Photo match score: {{ similarity_score }}%</span>
+            </div>
+            <div>
+              {% if ai_passed %}
+                <span class="px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-500 font-bold text-[11px] border border-emerald-500/20">Matched</span>
+              {% else %}
+                <span class="px-2.5 py-1 rounded-md bg-rose-500/10 text-rose-500 font-bold text-[11px] border border-rose-500/20">No Match</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Blockchain Receipt Box -->
+      <div class="bg-slate-50 dark:bg-[#111827]/90 border border-slate-200 dark:border-gray-800 rounded-3xl p-5 shadow-sm">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-2">
+          Blockchain Receipt
+        </h3>
+        <p class="text-[11px] text-slate-500 dark:text-gray-400 font-mono break-all">
+          <strong class="text-slate-700 dark:text-gray-300 block mb-1">Receipt ID:</strong>
+          {{ product.txHash or 'Verified by official database' }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Right Column: Product Specs & Factory Photos -->
+    <div class="lg:col-span-2 space-y-6">
+      
+      <div class="bg-slate-50 dark:bg-[#111827]/90 border border-slate-200 dark:border-gray-800 rounded-3xl p-6 sm:p-8 shadow-sm">
+        <h2 class="text-base font-bold text-slate-900 dark:text-white mb-5">
+          Official Shoe Details
+        </h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div class="p-4 rounded-xl bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-gray-800">
+            <span class="text-slate-400 block text-[10px] font-bold uppercase">Model Name</span>
+            <span class="text-sm font-bold text-slate-900 dark:text-white mt-1 block">
+              {{ product.product_name or product.name or 'Footwear Model' }}
+            </span>
+          </div>
+
+          <div class="p-4 rounded-xl bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-gray-800">
+            <span class="text-slate-400 block text-[10px] font-bold uppercase">Product Code</span>
+            <span class="text-sm font-mono font-bold text-indigo-500 mt-1 block">
+              {{ product.productId or product.product_id }}
+            </span>
+          </div>
+
+          <div class="p-4 rounded-xl bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-gray-800">
+            <span class="text-slate-400 block text-[10px] font-bold uppercase">Brand</span>
+            <span class="text-sm font-semibold text-slate-800 dark:text-gray-200 mt-1 block">
+              {{ product.brand }}
+            </span>
+          </div>
+
+          <div class="p-4 rounded-xl bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-gray-800">
+            <span class="text-slate-400 block text-[10px] font-bold uppercase">Production Batch</span>
+            <span class="text-sm font-mono font-semibold text-slate-800 dark:text-gray-200 mt-1 block">
+              {{ product.batchNo or product.batch_no }}
+            </span>
+          </div>
+
+          <div class="p-4 rounded-xl bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-gray-800">
+            <span class="text-slate-400 block text-[10px] font-bold uppercase">Release / Mfg Date</span>
+            <span class="text-sm font-semibold text-slate-800 dark:text-gray-200 mt-1 block">
+              {{ product.mfgDate or product.manufacturing_date }}
+            </span>
+          </div>
+
+          <div class="p-4 rounded-xl bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-gray-800">
+            <span class="text-slate-400 block text-[10px] font-bold uppercase">Authenticity Status</span>
+            <span class="text-sm font-bold text-emerald-500 mt-1 block">
+              Active Registry Record
+            </span>
+          </div>
+        </div>
+
+        <div class="mt-4 p-4 rounded-xl bg-white dark:bg-[#0b0f19] border border-slate-200 dark:border-gray-800">
+          <span class="text-slate-400 block text-[10px] font-bold uppercase">Description</span>
+          <p class="text-xs text-slate-700 dark:text-gray-300 mt-1 leading-relaxed">
+            {{ product.description }}
+          </p>
+        </div>
+
+        <!-- Factory Master Photos Preview -->
+        {% if product.all_images and product.all_images|length > 0 %}
+          <div class="mt-6">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300 block mb-3">
+              Original Factory Reference Photos
+            </span>
+            <div class="grid grid-cols-3 gap-3">
+              {% for img in product.all_images %}
+                <div class="h-28 rounded-xl bg-slate-800 border border-slate-700 overflow-hidden">
+                  <img src="{{ img }}" alt="Factory Reference Photo" class="w-full h-full object-cover">
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% elif product.image_path %}
+          <div class="mt-6">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300 block mb-3">
+              Original Factory Reference Photo
+            </span>
+            <div class="h-44 rounded-xl bg-slate-800 border border-slate-700 overflow-hidden max-w-xs">
+              <img src="{{ product.image_path }}" alt="Factory Reference Photo" class="w-full h-full object-cover">
+            </div>
+          </div>
+        {% endif %}
+
+      </div>
+
+    </div>
+
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
